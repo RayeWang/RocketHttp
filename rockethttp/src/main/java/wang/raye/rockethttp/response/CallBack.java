@@ -19,4 +19,20 @@ public interface CallBack<T> {
      * @param t
      */
     public void onSuccess(T t);
+
+    /**
+     * 网络错误的回调，主要是没有网络或者在非指定的网络上进行
+     * 比如指定了在WiFi情况下下载，但是当前网络处于3G,4G状态
+     * @param Type
+     */
+    public void onNetError(int Type);
+
+    /**
+     * 网络错误的相关Type
+     */
+    public  static final class NetErrorType{
+        /** 没有网络*/
+        public static final int NOINTERTER = 1;
+
+    }
 }
