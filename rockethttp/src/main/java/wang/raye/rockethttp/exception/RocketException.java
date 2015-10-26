@@ -5,4 +5,28 @@ package wang.raye.rockethttp.exception;
  * Created by Raye on 2015/10/23.
  */
 public class RocketException {
+
+    private int responseCode;
+    private String msg;
+
+    public RocketException(int responseCode, String msg) {
+        this.responseCode = responseCode;
+        this.msg = msg;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public int getResponseCode() {
+        return responseCode;
+    }
+
+    public void setResponseCode(int responseCode) {
+        this.responseCode = responseCode;
+    }
 }

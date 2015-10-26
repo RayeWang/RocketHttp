@@ -12,6 +12,7 @@ import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import wang.raye.rockethttp.SerializableBean;
 import wang.raye.rockethttp.response.CallBack;
 
 /**
@@ -44,11 +46,15 @@ public abstract class HttpClient implements Runnable{
     /** 结果回调*/
     protected CallBack callBack;
 
+    private long token;
+
     protected String url;
-    public HttpClient(String url,HttpConfig config,CallBack callBack){
+    public HttpClient(Handler handler,long token,String url,HttpConfig config,CallBack callBack){
         this.url = url;
         this.config = config;
         this.callBack = callBack;
+        this.token = token;
+        this.handler = handler;
     }
 
 
@@ -93,8 +99,10 @@ public abstract class HttpClient implements Runnable{
      * @param m
      */
     protected void sendMessage(Message m){
-        if(!isStop)
+        if(!isStop) {
+            m.getData().putLong("token",token);
             handler.sendMessage(m);
+        }
     }
 
 
@@ -133,8 +141,10 @@ public abstract class HttpClient implements Runnable{
         Method method = null;
         for(Method m : methods){
             if("onSuccess".equals(m.getName())){
-                method = m;
-                break;
+                if(!Modifier.isVolatile(m.getModifiers())) {
+                    method = m;
+                    break;
+                }
             }
         }
         try {
@@ -156,7 +166,8 @@ public abstract class HttpClient implements Runnable{
             //不用转化
             bundle.putString("data",json);
         }else{
-            bundle.putSerializable("data", (Serializable) new Gson().fromJson(json,clz));
+            bundle.putParcelable("data",new SerializableBean(new Gson().fromJson(json,clz)));
+//            bundle.putSerializable("data", new SerializableBean(new Gson().fromJson(json,clz)));
         }
     }
 }

@@ -2,6 +2,7 @@ package wang.raye.rockethttp;
 
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,8 +12,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import wang.raye.rockethttp.core.GetClient;
 import wang.raye.rockethttp.core.HttpClient;
 import wang.raye.rockethttp.core.HttpConfig;
+import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 
 /**
@@ -27,7 +30,7 @@ public class RocketHttp {
     /** 当前正在连接的对象*/
     private Map<Long,HttpClient> clientMap = null;
     /** 默认的HttpConfig*/
-    private HttpConfig config;
+    private  HttpConfig config;
 
     private Handler handler = new Handler(){
         @Override
@@ -36,7 +39,11 @@ public class RocketHttp {
             switch (msg.what){
                 case HttpClient.ONINTERNET:
                     //成功返回数据
-                    callBack.onSuccess(msg.getData().get("data"));
+                    callBack.onSuccess(((SerializableBean)msg.getData().get("data")).getData());
+                    break;
+                case HttpClient.ONERROR:
+                    callBack.onError(new RocketException(msg.getData().getInt("code"),
+                            msg.getData().getString("e")));
                     break;
             }
         }
@@ -58,10 +65,14 @@ public class RocketHttp {
         return rocketHttp;
     }
 
-    public synchronized static long get(String url){
-        long flag = System.currentTimeMillis();
-
-        return flag;
+    public synchronized static long get(String url,CallBack callBack){
+        long token = System.currentTimeMillis();
+        Log.i("Raye","this get token:"+token);
+        RocketHttp rocketHttp = getRocketHttp();
+        GetClient getClient = new GetClient(rocketHttp.handler,token,url,rocketHttp.config,callBack);
+        rocketHttp.clientMap.put(token,getClient);
+        rocketHttp.service.execute(getClient);
+        return token;
     }
 
     @Override
@@ -73,4 +84,6 @@ public class RocketHttp {
     public void setConfig(HttpConfig config) {
         this.config = config;
     }
+
+
 }

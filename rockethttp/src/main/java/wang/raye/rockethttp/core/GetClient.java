@@ -1,5 +1,6 @@
 package wang.raye.rockethttp.core;
 
+import android.os.Handler;
 import android.os.Message;
 
 import java.io.InputStreamReader;
@@ -13,8 +14,9 @@ import wang.raye.rockethttp.response.CallBack;
  */
 public class GetClient extends HttpClient{
 
-    public GetClient(String url, HttpConfig config,CallBack callBack) {
-        super(url, config,callBack);
+
+    public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack) {
+        super(handler, token, url, config, callBack);
     }
 
     @Override
@@ -50,14 +52,22 @@ public class GetClient extends HttpClient{
                     buf = null;
                     isr.close();
                     Message m = handler.obtainMessage(ONINTERNET);
-
+                    parse(sb.toString(),m.getData());
                     sendMessage(m);
                     return;
                 } else {
+                    if(code == 404){
+                        //404可以不用重试了
+                        Message m = handler.obtainMessage(ONERROR);
+                        m.getData().putInt("code", code);
+                        m.getData().putString("e", "responseCode:" + code);
+                        sendMessage(m);
+                        return;
+                    }
                     if(count == config.getTryAgain() - 1) {
                         Message m = handler.obtainMessage(ONERROR);
                         m.getData().putInt("code", code);
-                        m.getData().putString("e", "responseCode" + code);
+                        m.getData().putString("e", "responseCode:" + code);
                         sendMessage(m);
                     }
                 }
@@ -65,7 +75,7 @@ public class GetClient extends HttpClient{
                 if(count == config.getTryAgain() - 1) {
                     //不需要重试了，直接返回
                     Message m = handler.obtainMessage(ONERROR);
-                    m.getData().putInt("responseCode", code);
+                    m.getData().putInt("code", code);
                     m.getData().putString("e", e.getMessage());
                     sendMessage(m);
                 }

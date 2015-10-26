@@ -1,1 +1,1 @@
-include ':app', ':rockethttp', ':rockethttp', ':rockethttp2'
+include ':app', ':rockethttp', ':rockethttp'
