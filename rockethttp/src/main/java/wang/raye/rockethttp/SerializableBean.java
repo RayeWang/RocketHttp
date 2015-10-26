@@ -3,8 +3,6 @@ package wang.raye.rockethttp;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.io.Serializable;
-
 /**
  * 用来传递的课序列化对象
  * Created by Raye on 2015/10/26.
@@ -17,6 +15,7 @@ public class SerializableBean implements Parcelable{
     }
 
     protected SerializableBean(Parcel in) {
+        this.data = in.readValue(Object.class.getClassLoader());
     }
 
     public static final Creator<SerializableBean> CREATOR = new Creator<SerializableBean>() {

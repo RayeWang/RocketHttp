@@ -3,6 +3,7 @@ package wang.raye.rockethttp.core;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import com.google.gson.Gson;
 
@@ -169,5 +170,10 @@ public abstract class HttpClient implements Runnable{
             bundle.putParcelable("data",new SerializableBean(new Gson().fromJson(json,clz)));
 //            bundle.putSerializable("data", new SerializableBean(new Gson().fromJson(json,clz)));
         }
+    }
+
+    public void stop(){
+        Log.i("Raye","this is stop=true");
+        this.isStop = true;
     }
 }

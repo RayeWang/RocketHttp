@@ -31,8 +31,12 @@ public interface CallBack<T> {
      * 网络错误的相关Type
      */
     public  static final class NetErrorType{
+        /** 网络检测通过*/
+        public static final int CHECKSUCCESS = 0;
         /** 没有网络*/
         public static final int NOINTERTER = 1;
+        /** 网络类型错误*/
+        public static final int NETTYPEERROR = 2;
 
     }
 }
