@@ -123,9 +123,9 @@ public abstract class HttpClient implements Runnable{
         }
         String str = "";
         for(Map.Entry<String, Object> entry : params.entrySet()){
-            if(removeKey != null && removeKey.contains(entry.getKey())){
-                continue;
-            }
+//            if(removeKey != null && removeKey.contains(entry.getKey())){
+//                continue;
+//            }
             str +=entry.getKey()+"="+ URLEncoder.encode(entry.getValue().toString(), config.getCharSet())+"&";
         }
         str = str.substring(0,str.length() - 1);

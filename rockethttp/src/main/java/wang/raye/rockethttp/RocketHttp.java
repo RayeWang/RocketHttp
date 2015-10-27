@@ -7,13 +7,13 @@ import android.os.Message;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import wang.raye.rockethttp.core.GetClient;
 import wang.raye.rockethttp.core.HttpClient;
 import wang.raye.rockethttp.core.HttpConfig;
-import wang.raye.rockethttp.core.TestStopClient;
 import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 
@@ -89,14 +89,41 @@ public class RocketHttp {
             return 0;
         }
     }
-    public synchronized  static long test(CallBack callBack){
-        long token = System.currentTimeMillis();
+
+    public synchronized static long get(String url,HashMap<String,Object> params,CallBack callBack){
         RocketHttp rocketHttp = getRocketHttp();
-        TestStopClient client = new TestStopClient(rocketHttp.handler,token,"",rocketHttp.config,callBack);
-        rocketHttp.clientMap.put(token, client);
-        rocketHttp.service.execute(client);
-        return token;
+        int type = rocketHttp.config.checkNet();
+        if(CallBack.NetErrorType.CHECKSUCCESS == type){
+            long token = System.currentTimeMillis();
+            GetClient getClient = new GetClient(rocketHttp.handler,token,url,rocketHttp.config,
+                    callBack,params);
+            rocketHttp.clientMap.put(token,getClient);
+            rocketHttp.service.execute(getClient);
+            return token;
+        }else{
+            //网络类型不匹配或没有网络
+            callBack.onNetError(type);
+            return 0;
+        }
     }
+
+    public synchronized static long get(String url,Object params,CallBack callBack){
+        RocketHttp rocketHttp = getRocketHttp();
+        int type = rocketHttp.config.checkNet();
+        if(CallBack.NetErrorType.CHECKSUCCESS == type){
+            long token = System.currentTimeMillis();
+            GetClient getClient = new GetClient(rocketHttp.handler,token,url,rocketHttp.config,
+                    callBack,params);
+            rocketHttp.clientMap.put(token,getClient);
+            rocketHttp.service.execute(getClient);
+            return token;
+        }else{
+            //网络类型不匹配或没有网络
+            callBack.onNetError(type);
+            return 0;
+        }
+    }
+
 
     @Override
     protected void finalize() throws Throwable {

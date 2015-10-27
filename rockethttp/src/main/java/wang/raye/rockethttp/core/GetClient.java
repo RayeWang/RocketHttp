@@ -5,6 +5,7 @@ import android.os.Message;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
 
 import wang.raye.rockethttp.response.CallBack;
 
@@ -14,9 +15,23 @@ import wang.raye.rockethttp.response.CallBack;
  */
 public class GetClient extends HttpClient{
 
+    private HashMap<String,Object> params;
+    private Object paramObject;
 
     public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack) {
         super(handler, token, url, config, callBack);
+    }
+
+    public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack,
+                     HashMap<String,Object> params) {
+        super(handler, token, url, config, callBack);
+        this.params = params;
+    }
+
+    public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack,
+                     Object paramObject) {
+        super(handler, token, url, config, callBack);
+        this.paramObject = paramObject;
     }
 
     @Override
@@ -35,7 +50,15 @@ public class GetClient extends HttpClient{
         int count = 0;
         while(count < config.getTryAgain()) {
             try {
+                if(params != null){
+                    String tempParams = paramsToString(params);
+                    if(url.indexOf("?") > 0){
+                        url += "&"+tempParams;
+                    }else{
+                        url += "?"+tempParams;
+                    }
 
+                }
                 conn = initHttp(url);
                 //设置请求方式
                 conn.setRequestMethod("GET");
