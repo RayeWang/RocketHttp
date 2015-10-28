@@ -14,6 +14,7 @@ import java.util.concurrent.Executors;
 import wang.raye.rockethttp.core.GetClient;
 import wang.raye.rockethttp.core.HttpClient;
 import wang.raye.rockethttp.core.HttpConfig;
+import wang.raye.rockethttp.core.PostClient;
 import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 
@@ -108,24 +109,49 @@ public class RocketHttp {
         return get(url,null,params,callBack,null);
     }
 
-
+    /**
+     * get请求
+     * @param url 请求的URL
+     * @param callBack 回调
+     * @param config 相关配置
+     * @return 请求的HttpClient的标识
+     */
     public synchronized static long get(String url,CallBack callBack,HttpConfig config){
         return get(url,null,null,callBack,config);
     }
 
+    /**
+     * Get请求
+     * @param url 请求的URL
+     * @param params 请求参数的HashMap
+     * @param callBack 回调
+     * @param config 相关配置
+     * @return 请求的HttpClient的标识
+     */
     public synchronized static long get(String url,HashMap<String,Object> params,CallBack callBack,
                                         HttpConfig config){
         return get(url,params,null,callBack,config);
     }
 
+    /**
+     * Get请求
+     * @param url 请求的URL
+     * @param mapPramas  请求参数的HashMap
+     * @param params 请求的参数载体bean对象
+     * @param callBack 回调
+     * @param config 相关配置
+     * @return 请求的HttpClient的标识
+     */
     private synchronized static long get(String url,HashMap<String,Object> mapPramas,
                                         Object params,CallBack callBack,HttpConfig config){
+
         RocketHttp rocketHttp = getRocketHttp();
+        config = config == null ? rocketHttp.config : config;
         int type = config.checkNet();
         if(CallBack.NetErrorType.CHECKSUCCESS == type){
             long token = System.currentTimeMillis();
             GetClient getClient = new GetClient(rocketHttp.handler,token,url,
-                    config==null?rocketHttp.config:config, callBack,params,mapPramas);
+                    config  , callBack,params,mapPramas);
 
             rocketHttp.clientMap.put(token,getClient);
             rocketHttp.service.execute(getClient);
@@ -137,6 +163,83 @@ public class RocketHttp {
         }
     }
 
+
+
+    /**
+     * Post请求
+     * @param url 请求的URL
+     * @param params 请求的参数（HashMap）
+     * @param callBack 回调
+     * @return  请求的HttpClient的标识
+     */
+    public synchronized static long post(String url,HashMap<String,Object> params,CallBack callBack){
+        return post(url,params,null,callBack,null);
+    }
+
+    /**
+     * Post请求
+     * @param url 请求的URL
+     * @param params 请求参数的bean
+     * @param callBack 回调
+     * @return 请求的HttpClient的标识
+     */
+    public synchronized static long post(String url,Object params,CallBack callBack){
+        return post(url,null,params,callBack,null);
+    }
+
+    /**
+     * Post请求
+     * @param url 请求的URL
+     * @param params 请求参数的bean
+     * @param callBack 回调
+     * @param config 相关配置
+     * @return 请求的HttpClient的标识
+     */
+    public synchronized static long post(String url,Object params,CallBack callBack,
+                                         HttpConfig config){
+        return post(url,null,params,callBack,config);
+    }
+
+    /**
+     * Post请求
+     * @param url 请求的URL
+     * @param params 请求的参数HashMap
+     * @param callBack 回调
+     * @param config 相关配置
+     * @return 请求的HttpClient的标识
+     */
+    public synchronized static long post(String url,HashMap<String,Object> params,
+                                         CallBack callBack,HttpConfig config){
+        return post(url,params,null,callBack,config);
+    }
+    /**
+     * post请求
+     * @param url 请求的URL
+     * @param hashMap  请求参数的HashMap
+     * @param params 请求的参数载体bean对象
+     * @param callBack 回调
+     * @param config 相关配置
+     * @return 请求的HttpClient的标识
+     */
+    private synchronized static long post(String url,HashMap<String,Object> hashMap,
+                                         Object params,CallBack callBack,HttpConfig config){
+        RocketHttp rocketHttp = getRocketHttp();
+        config = config == null ? rocketHttp.config : config;
+        int type = config.checkNet();
+        if(CallBack.NetErrorType.CHECKSUCCESS == type){
+            long token = System.currentTimeMillis();
+            PostClient postClient = new PostClient(rocketHttp.handler,token,url,
+                    config  , callBack,params,hashMap);
+
+            rocketHttp.clientMap.put(token,postClient);
+            rocketHttp.service.execute(postClient);
+            return token;
+        }else{
+            //网络类型不匹配或没有网络
+            callBack.onNetError(type);
+            return 0;
+        }
+    }
 
     @Override
     protected void finalize() throws Throwable {

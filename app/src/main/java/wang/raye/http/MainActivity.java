@@ -31,7 +31,7 @@ public class MainActivity extends ActionBarActivity {
         params.put("page", 2);
 
         RequestBean bean = new RequestBean(2);
-        RocketHttp.get("http://www.1024eye.com/app/article.do",bean, new CallBack<ArticleResult>() {
+        RocketHttp.post("http://www.1024eye.com/app/article.do",bean, new CallBack<ArticleResult>() {
             @Override
             public void onError(RocketException e) {
                 Toast.makeText(MainActivity.this,"onError",Toast.LENGTH_SHORT).show();

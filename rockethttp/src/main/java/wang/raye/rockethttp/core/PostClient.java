@@ -17,14 +17,19 @@ import wang.raye.rockethttp.response.CallBack;
  */
 public class PostClient extends HttpClient {
 
+    private HashMap<String,Object> params;
+    private Object paramObject;
 
-    public PostClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack) {
+    public PostClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack,
+                      Object paramObject,HashMap<String,Object> params) {
         super(handler, token, url, config, callBack);
+        this.paramObject = paramObject;
+        this.params = params;
     }
 
     @Override
     public void run() {
-
+        post(url);
     }
 
     /**
@@ -32,7 +37,7 @@ public class PostClient extends HttpClient {
      * @param url 请求的地址
      * @return 返回值,返回null时代表出错了
      */
-    private void post(String url,HashMap<String,Object> params){
+    private void post(String url){
         URL httpUrl = null;
         HttpURLConnection conn = null;
         OutputStreamWriter osw;
@@ -46,8 +51,13 @@ public class PostClient extends HttpClient {
                 //设置请求方式
                 conn.setRequestMethod("POST");
                 osw = new OutputStreamWriter(conn.getOutputStream());
-
-                osw.write(paramsToString(params));
+                if(params != null || paramObject != null) {
+                    if (params != null) {
+                        osw.write(paramsToString(params));
+                    }else{
+                        osw.write(paramsToString(paramObject));
+                    }
+                }
 
                 osw.close();
                 code = conn.getResponseCode();
