@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.HashMap;
+
 import wang.raye.preioc.PreIOC;
 import wang.raye.preioc.annotation.BindById;
 import wang.raye.preioc.annotation.OnClick;
@@ -25,7 +27,11 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         PreIOC.binder(this);
-        RocketHttp.get("http://www.1024eye.com/app/article.do", new CallBack<ArticleResult>() {
+        HashMap<String,Object> params = new HashMap<>();
+        params.put("page", 2);
+
+        RequestBean bean = new RequestBean(2);
+        RocketHttp.get("http://www.1024eye.com/app/article.do",bean, new CallBack<ArticleResult>() {
             @Override
             public void onError(RocketException e) {
                 Toast.makeText(MainActivity.this,"onError",Toast.LENGTH_SHORT).show();
@@ -50,27 +56,9 @@ public class MainActivity extends ActionBarActivity {
     public void click(View view){
         switch (view.getId()){
             case R.id.begin:
-                token = RocketHttp.test(new CallBack<String>() {
-                    @Override
-                    public void onError(RocketException e) {
-                        Log.i("Raye","onError");
-                    }
 
-                    @Override
-                    public void onSuccess(String o) {
-
-                        Log.i("Raye","onSuccess:"+o);
-                    }
-
-                    @Override
-                    public void onNetError(int Type) {
-
-                        Log.i("Raye","onNetError:"+Type);
-                    }
-                });
                 break;
             case R.id.stop:
-                RocketHttp.stop(token);
                 break;
         }
     }

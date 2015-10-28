@@ -2,6 +2,7 @@ package wang.raye.rockethttp.core;
 
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -18,20 +19,12 @@ public class GetClient extends HttpClient{
     private HashMap<String,Object> params;
     private Object paramObject;
 
-    public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack) {
-        super(handler, token, url, config, callBack);
-    }
 
     public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack,
-                     HashMap<String,Object> params) {
-        super(handler, token, url, config, callBack);
-        this.params = params;
-    }
-
-    public GetClient(Handler handler, long token, String url, HttpConfig config, CallBack callBack,
-                     Object paramObject) {
+                     Object paramObject,HashMap<String,Object> params) {
         super(handler, token, url, config, callBack);
         this.paramObject = paramObject;
+        this.params = params;
     }
 
     @Override
@@ -58,7 +51,15 @@ public class GetClient extends HttpClient{
                         url += "?"+tempParams;
                     }
 
+                }else if(paramObject != null){
+                    String tempParams = paramsToString(paramObject);
+                    if(url.indexOf("?") > 0){
+                        url += "&"+tempParams;
+                    }else{
+                        url += "?"+tempParams;
+                    }
                 }
+                Log.i("Raye",url);
                 conn = initHttp(url);
                 //设置请求方式
                 conn.setRequestMethod("GET");

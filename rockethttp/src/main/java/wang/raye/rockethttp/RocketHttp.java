@@ -54,6 +54,7 @@ public class RocketHttp {
                                 msg.getData().getString("e")));
                         break;
                 }
+                clientMap.remove(msg.getData().getLong("token"));
             }
         }
     };
@@ -74,46 +75,58 @@ public class RocketHttp {
         return rocketHttp;
     }
 
+    /**
+     * Get请求
+     * @param url 请求的URL
+     * @param callBack 回调
+     * @return 请求的HttpClient的标识
+     */
     public synchronized static long get(String url,CallBack callBack){
-        RocketHttp rocketHttp = getRocketHttp();
-        int type = rocketHttp.config.checkNet();
-        if(CallBack.NetErrorType.CHECKSUCCESS == type){
-            long token = System.currentTimeMillis();
-            GetClient getClient = new GetClient(rocketHttp.handler,token,url,rocketHttp.config,callBack);
-            rocketHttp.clientMap.put(token,getClient);
-            rocketHttp.service.execute(getClient);
-            return token;
-        }else{
-            //网络类型不匹配或没有网络
-            callBack.onNetError(type);
-            return 0;
-        }
+        return get(url,null,null,callBack,null);
     }
 
+    /**
+     * get请求
+     * @param url 请求的URL
+     * @param params 请求的参数HashMap
+     * @param callBack 回调
+     * @return 请求的HttpClient的标识
+     */
     public synchronized static long get(String url,HashMap<String,Object> params,CallBack callBack){
-        RocketHttp rocketHttp = getRocketHttp();
-        int type = rocketHttp.config.checkNet();
-        if(CallBack.NetErrorType.CHECKSUCCESS == type){
-            long token = System.currentTimeMillis();
-            GetClient getClient = new GetClient(rocketHttp.handler,token,url,rocketHttp.config,
-                    callBack,params);
-            rocketHttp.clientMap.put(token,getClient);
-            rocketHttp.service.execute(getClient);
-            return token;
-        }else{
-            //网络类型不匹配或没有网络
-            callBack.onNetError(type);
-            return 0;
-        }
+        return get(url,params,null,callBack,null);
     }
 
+
+    /**
+     *  Get请求
+     * @param url 请求的URL
+     * @param params 请求的参数载体bean对象
+     * @param callBack 回调
+     * @return 请求的HttpClient的标识
+     */
     public synchronized static long get(String url,Object params,CallBack callBack){
+        return get(url,null,params,callBack,null);
+    }
+
+
+    public synchronized static long get(String url,CallBack callBack,HttpConfig config){
+        return get(url,null,null,callBack,config);
+    }
+
+    public synchronized static long get(String url,HashMap<String,Object> params,CallBack callBack,
+                                        HttpConfig config){
+        return get(url,params,null,callBack,config);
+    }
+
+    private synchronized static long get(String url,HashMap<String,Object> mapPramas,
+                                        Object params,CallBack callBack,HttpConfig config){
         RocketHttp rocketHttp = getRocketHttp();
-        int type = rocketHttp.config.checkNet();
+        int type = config.checkNet();
         if(CallBack.NetErrorType.CHECKSUCCESS == type){
             long token = System.currentTimeMillis();
-            GetClient getClient = new GetClient(rocketHttp.handler,token,url,rocketHttp.config,
-                    callBack,params);
+            GetClient getClient = new GetClient(rocketHttp.handler,token,url,
+                    config==null?rocketHttp.config:config, callBack,params,mapPramas);
+
             rocketHttp.clientMap.put(token,getClient);
             rocketHttp.service.execute(getClient);
             return token;

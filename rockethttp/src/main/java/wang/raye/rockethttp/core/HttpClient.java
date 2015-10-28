@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
@@ -108,7 +109,7 @@ public abstract class HttpClient implements Runnable{
 
 
     protected String paramsToString(HashMap<String, Object> params) throws UnsupportedEncodingException {
-        return paramsToString(params,null);
+        return paramsToString(params, null);
     }
 
     /**
@@ -121,15 +122,37 @@ public abstract class HttpClient implements Runnable{
         if(params == null){
             return "";
         }
-        String str = "";
+        StringBuffer str = new StringBuffer();
         for(Map.Entry<String, Object> entry : params.entrySet()){
 //            if(removeKey != null && removeKey.contains(entry.getKey())){
 //                continue;
 //            }
-            str +=entry.getKey()+"="+ URLEncoder.encode(entry.getValue().toString(), config.getCharSet())+"&";
+            str.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue().toString(),
+                    config.getCharSet())).append("&");
         }
-        str = str.substring(0,str.length() - 1);
-        return str;
+        str.deleteCharAt(str.length() - 1);
+        return str.toString();
+    }
+
+    protected String paramsToString(Object object){
+        if(object == null){
+            return "";
+        }
+        StringBuffer str = new StringBuffer();
+        Field[] fields = object.getClass().getDeclaredFields();
+        try {
+            for (Field field : fields) {
+                Method method = object.getClass().getMethod("get" + captureName(field.getName()));
+                Object value = method.invoke(object);
+                if(value != null){
+                    str.append(field.getName()).append("=").append(value).append("&");
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        str.deleteCharAt(str.length() - 1);
+        return str.toString();
     }
 
     public CallBack getCallBack() {
@@ -163,7 +186,7 @@ public abstract class HttpClient implements Runnable{
      */
     protected void parse(String json,Bundle bundle){
         Class clz = getCallBackClz();
-        if(clz == String.class){
+        if(clz == String.class || clz == Object.class){
             //不用转化
             bundle.putString("data",json);
         }else{
@@ -173,7 +196,21 @@ public abstract class HttpClient implements Runnable{
     }
 
     public void stop(){
-        Log.i("Raye","this is stop=true");
         this.isStop = true;
+    }
+
+
+    /**
+     * 将首字母转为大写
+     * @param name
+     * @return
+     */
+    public static String captureName(String name) {
+        char[] cs=name.toCharArray();
+        if(cs[0] >= 97){
+            cs[0]-=32;
+        }
+        return String.valueOf(cs);
+
     }
 }
