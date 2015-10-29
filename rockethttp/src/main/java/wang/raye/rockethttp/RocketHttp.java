@@ -11,6 +11,8 @@ import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import wang.raye.rockethttp.core.Client;
+import wang.raye.rockethttp.core.DownClient;
 import wang.raye.rockethttp.core.GetClient;
 import wang.raye.rockethttp.core.HttpClient;
 import wang.raye.rockethttp.core.HttpConfig;
@@ -37,24 +39,24 @@ public class RocketHttp {
         @Override
         public void handleMessage(Message msg) {
             HttpClient client = clientMap.get(msg.getData().getLong("token"));
-            if(client != null) {
-                CallBack callBack =client.getCallBack();
-                switch (msg.what) {
-                    case HttpClient.ONINTERNET:
-                        //成功返回数据
-                        Object obj = msg.getData().get("data");
-                        if(obj instanceof SerializableBean){
-                            callBack.onSuccess(((SerializableBean) msg.getData().get("data")).getData());
-                        }else{
-                            callBack.onSuccess(obj);
-                        }
+            if(client != null ) {
+                    CallBack callBack = ((HttpClient) client).getCallBack();
+                    switch (msg.what) {
+                        case HttpClient.ONINTERNET:
+                            //成功返回数据
+                            Object obj = msg.getData().get("data");
+                            if (obj instanceof SerializableBean) {
+                                callBack.onSuccess(((SerializableBean) msg.getData().get("data")).getData());
+                            } else {
+                                callBack.onSuccess(obj);
+                            }
 
-                        break;
-                    case HttpClient.ONERROR:
-                        callBack.onError(new RocketException(msg.getData().getInt("code"),
-                                msg.getData().getString("e")));
-                        break;
-                }
+                            break;
+                        case HttpClient.ONERROR:
+                            callBack.onError(new RocketException(msg.getData().getInt("code"),
+                                    msg.getData().getString("e")));
+                            break;
+                    }
                 clientMap.remove(msg.getData().getLong("token"));
             }
         }

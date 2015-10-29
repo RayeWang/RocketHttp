@@ -155,6 +155,41 @@ public abstract class HttpClient implements Runnable{
         return str.toString();
     }
 
+    protected void getResponse(final HttpURLConnection conn,InputStreamReader isr,final int count)
+            throws IOException {
+        int code = conn.getResponseCode();
+        if (code == 200) {
+            isr = new InputStreamReader(conn.getInputStream());
+            StringBuffer sb = new StringBuffer();
+            char[] buf = new char[1024];
+            int len = 0;
+            while ((len = isr.read(buf, 0, 1024)) > 0 && !isStop) {
+                sb.append(buf, 0, len);
+            }
+            buf = null;
+            isr.close();
+            Message m = handler.obtainMessage(ONINTERNET);
+            parse(sb.toString(),m.getData());
+            sendMessage(m);
+            return;
+        } else {
+            if(code == 404){
+                //404可以不用重试了
+                Message m = handler.obtainMessage(ONERROR);
+                m.getData().putInt("code", code);
+                m.getData().putString("e", "responseCode:" + code);
+                sendMessage(m);
+                return;
+            }
+            if(count == config.getTryAgain() - 1) {
+                Message m = handler.obtainMessage(ONERROR);
+                m.getData().putInt("code", code);
+                m.getData().putString("e", "responseCode:" + code);
+                sendMessage(m);
+            }
+        }
+    }
+
     public CallBack getCallBack() {
         return callBack;
     }

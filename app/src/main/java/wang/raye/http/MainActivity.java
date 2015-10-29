@@ -6,8 +6,16 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
+import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 import java.util.HashMap;
 
@@ -17,11 +25,15 @@ import wang.raye.preioc.annotation.OnClick;
 import wang.raye.rockethttp.RocketHttp;
 import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
+import wang.raye.rockethttp.utils.ImageLoaderUtil;
 
 public class MainActivity extends ActionBarActivity {
 
     @BindById(R.id.begin)
     TextView begin;
+
+    @BindById(R.id.img)
+    ImageView img;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,34 +43,49 @@ public class MainActivity extends ActionBarActivity {
         params.put("page", 2);
 
         RequestBean bean = new RequestBean(2);
-        RocketHttp.post("http://www.1024eye.com/app/article.do",bean, new CallBack<ArticleResult>() {
+        RocketHttp.post("http://www.1024eye.com/app/article.do", bean, new CallBack<ArticleResult>() {
             @Override
             public void onError(RocketException e) {
-                Toast.makeText(MainActivity.this,"onError",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "onError", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onSuccess(ArticleResult o) {
-                for(ArticleResult.Article article:o.getData()){
-                    Log.i("Raye","article:"+article.getTitle());
+                for (ArticleResult.Article article : o.getData()) {
+                    Log.i("Raye", "article:" + article.getTitle());
                 }
             }
 
             @Override
             public void onNetError(int Type) {
-                Toast.makeText(MainActivity.this,"onNetError:"+Type,Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "onNetError:" + Type, Toast.LENGTH_SHORT).show();
             }
         });
+
+        DisplayImageOptions options  = new DisplayImageOptions.Builder().cacheInMemory(true).cacheOnDisk(true)
+                .showImageOnLoading(R.drawable.ic_launcher)
+                .showImageForEmptyUri(R.drawable.ic_launcher)
+                .showImageOnFail(R.drawable.ic_launcher)
+                .build();
+        ImageLoaderUtil loaderUtil = ImageLoaderUtil.getInstance(this, options);
+        begin.setText("Size:"+loaderUtil.getCacheSize());
+        loaderUtil.displayImage(img,
+                "http://wuxi.sinaimg.cn/2013/0209/U9324P1474DT20130209133149.jpg");
+
+
     }
 
     private long token;
-    @OnClick({R.id.begin,R.id.stop})
+    @OnClick({R.id.begin,R.id.stop,R.id.clean})
     public void click(View view){
         switch (view.getId()){
             case R.id.begin:
 
                 break;
             case R.id.stop:
+                break;
+            case R.id.clean:
+                ImageLoaderUtil.getInstance(this,null).cleanCache();
                 break;
         }
     }
