@@ -31,7 +31,7 @@ import wang.raye.rockethttp.response.CallBack;
  * 主要以此对象在Thread里面去执行
  * Created by Raye on 2015/10/23.
  */
-public abstract class HttpClient implements Runnable{
+public abstract class HttpClient implements Runnable,Client{
 
     /** 网络数据返回*/
     public static final int ONINTERNET = 1;

@@ -10,12 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.nostra13.universalimageloader.cache.disc.naming.Md5FileNameGenerator;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import com.nostra13.universalimageloader.core.assist.QueueProcessingType;
-import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 import java.util.HashMap;
 
@@ -23,6 +18,7 @@ import wang.raye.preioc.PreIOC;
 import wang.raye.preioc.annotation.BindById;
 import wang.raye.preioc.annotation.OnClick;
 import wang.raye.rockethttp.RocketHttp;
+import wang.raye.rockethttp.core.DownClient;
 import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 import wang.raye.rockethttp.utils.ImageLoaderUtil;
@@ -80,9 +76,39 @@ public class MainActivity extends ActionBarActivity {
     public void click(View view){
         switch (view.getId()){
             case R.id.begin:
+                token = RocketHttp.down(this, "http://183.56.172.239/m.wdjcdn.com/apk.wdjcdn.com/6/e8/609a27f90678ab29a24e2311eaabae85.apk",
+                        new DownClient.DownListener() {
+                            @Override
+                            public void onProgress(long progress) {
+                                Log.i("Raye","onChange:"+ progress);
+                            }
 
+                            @Override
+                            public void onAllLength(long allLength) {
+
+                                Log.i("Raye","onAllLength:"+allLength);
+                            }
+
+                            @Override
+                            public void onFinish() {
+
+                                Log.i("Raye","onFinish:");
+                            }
+
+                            @Override
+                            public void onSpeed(long speed) {
+
+                                Log.i("Raye","onSpeed:"+speed);
+                            }
+
+                            @Override
+                            public void onError(RocketException e) {
+                                Log.i("Raye","onError:"+e.getMsg());
+                            }
+                        });
                 break;
             case R.id.stop:
+                RocketHttp.stop(token);
                 break;
             case R.id.clean:
                 ImageLoaderUtil.getInstance(this,null).cleanCache();

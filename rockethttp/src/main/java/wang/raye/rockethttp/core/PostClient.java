@@ -38,7 +38,6 @@ public class PostClient extends HttpClient {
      * @return 返回值,返回null时代表出错了
      */
     private void post(String url){
-        URL httpUrl = null;
         HttpURLConnection conn = null;
         OutputStreamWriter osw;
         InputStreamReader isr;

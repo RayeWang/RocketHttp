@@ -2,6 +2,7 @@ package wang.raye.rockethttp.core;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Message;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,15 +10,16 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.ConcurrentHashMap;
 
+import wang.raye.rockethttp.RocketHttp;
 import wang.raye.rockethttp.db.RocketDBHelp;
+import wang.raye.rockethttp.exception.RocketException;
 
 /**
  * 下载的工具类
  * Created by Raye on 2015/10/29.
  */
-public class DownClient implements Runnable{
+public class DownClient implements Runnable,Client{
 
     /** 总长度*/
     public static final int ONALLLENGTH = 101;
@@ -27,6 +29,8 @@ public class DownClient implements Runnable{
     public static final int ONDOWNFINSH = 103;
     /** 下载速度*/
     public static final int ONSPEED = 104;
+    /*** 出现错误*/
+    public static final int ONERROR = 105;
     /** 文件保存的位置 */
     private String path;
     /** 下载完成后的文件 */
@@ -42,7 +46,7 @@ public class DownClient implements Runnable{
     /** 是否支持断点下载 */
     private boolean isRange = true;
     /** 进度监听*/
-    private OnDownProgress onDownProgress;
+    private DownListener onDownProgress;
     /** 当前下载的进度*/
     private long nowDown;
 
@@ -51,20 +55,31 @@ public class DownClient implements Runnable{
     /** 是否下载完成*/
     private boolean isFinish = false;
 
-    private boolean isContinue;
+    private boolean isContinue = true;
 
     private RocketDBHelp dbHelp;
 
     private String fileName;
+
+    private RocketHttp.FinishListener finishListener;
+    private long token;
+    /** 已经重试的次数*/
+    private int count = 0;
     private Handler handler = new Handler(){
         public void handleMessage(android.os.Message msg) {
+            if(msg.what == ONDOWNFINSH){
+                finishListener.onDownFinish(token);
+            }
             if(onDownProgress != null){
                 switch (msg.what) {
                     case ONALLLENGTH:
                         onDownProgress.onAllLength(fileLenth);
                         break;
                     case ONLENGTHCHANGE:
-                        onDownProgress.onChange(nowDown);
+                        if(!isFinish && isContinue) {
+                            onDownProgress.onProgress(nowDown);
+                            sendEmptyMessageDelayed(ONLENGTHCHANGE,500);
+                        }
                         break;
                     case ONDOWNFINSH:
                         isFinish = true;
@@ -80,6 +95,11 @@ public class DownClient implements Runnable{
                             handler.sendEmptyMessageDelayed(4, 1000);
                         }
                         break;
+                    case ONERROR:
+                        isContinue = false;
+                        onDownProgress.onError(new RocketException(msg.getData().getInt("code"),
+                                msg.getData().getString("e")));
+                        break;
                     default:
                         break;
                 }
@@ -87,20 +107,25 @@ public class DownClient implements Runnable{
         };
     };
 
-    public DownClient(Context context, String url, String path, OnDownProgress onDownProgress) {
+    public DownClient(Context context, String url, String path, DownListener onDownProgress,
+                      RocketHttp.FinishListener finishListener,long token) {
         dbHelp = new RocketDBHelp(context);
         this.onDownProgress = onDownProgress;
         this.path = path;
         this.url = url;
         this.fileName = url.substring(url.lastIndexOf("/")+1);
+        this.finishListener = finishListener;
+        this.token = token;
     }
     public DownClient(Context context, String url, String path,String fileName,
-                      OnDownProgress onDownProgress) {
+                      DownListener onDownProgress,RocketHttp.FinishListener finishListener,long token) {
         dbHelp = new RocketDBHelp(context);
         this.onDownProgress = onDownProgress;
         this.path = path;
         this.url = url;
         this.fileName = fileName;
+        this.finishListener = finishListener;
+        this.token = token;
     }
     @Override
     public void run() {
@@ -108,11 +133,15 @@ public class DownClient implements Runnable{
             begin(path,fileName);
         } catch (Exception e) {
             e.printStackTrace();
+            Message m = handler.obtainMessage(ONERROR);
+            m.getData().putInt("code",0);
+            m.getData().putString("e",e.toString());
+            handler.sendMessage(m);
         }
     }
 
     public void stop() {
-
+        isContinue = false;
     }
 
     private void begin(String path,String fileName)throws Exception{
@@ -197,11 +226,9 @@ public class DownClient implements Runnable{
             i = length;
 
             nowDown += length;
-            if (isRange) {
-                // 是断点下载才打开记录
-                dbHelp.update(url,nowDown);
-            }
-            handler.sendEmptyMessage(2);
+
+            // 是断点下载才打开记录
+            dbHelp.update(url,nowDown);
             if(nowDown >= fileLenth){
                 dbHelp.deleteLog(url);
                 handler.sendEmptyMessage(ONDOWNFINSH);
@@ -213,7 +240,9 @@ public class DownClient implements Runnable{
     }
 
     private void beginDown(){
-        if (nowDown < fileLenth && fileLenth != 0) {// 未下载完成
+        int code = 0;
+        if (nowDown < fileLenth || fileLenth == 0) {// 未下载完成
+
             try {
                 URL downUrl = new URL(url);
                 HttpURLConnection http = (HttpURLConnection) downUrl.openConnection();
@@ -229,7 +258,7 @@ public class DownClient implements Runnable{
                 http.setRequestProperty("User-Agent",
                         "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.2; Trident/4.0; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30; .NET CLR 3.0.4506.2152; .NET CLR 3.5.30729)");
                 http.setRequestProperty("Connection", "Keep-Alive");
-                int code = http.getResponseCode();
+                code = http.getResponseCode();
                 if(code == 200 || code == 206){
                     InputStream inStream = http.getInputStream();
                     byte[] buffer = new byte[1024];
@@ -240,8 +269,14 @@ public class DownClient implements Runnable{
                     }
 
                     inStream.close();
+                }else{
+                    Message m = handler.obtainMessage(ONERROR);
+                    m.getData().putInt("code",code);
+                    m.getData().putString("e","ResponseCode is "+code);
+                    handler.sendMessage(m);
                 }
             } catch (Exception e) {
+                count ++;
                 //产生了异常，隔一秒再试
                 e.printStackTrace();
                 try {
@@ -249,19 +284,27 @@ public class DownClient implements Runnable{
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
-                run();
+                if(count < 5) {
+                    //5次后就不重试了
+                    beginDown();
+                }else{
+                    Message m = handler.obtainMessage(ONERROR);
+                    m.getData().putInt("code",code);
+                    m.getData().putString("e",e.toString());
+                    handler.sendMessage(m);
+                }
             }
         }
     }
     /**
      * 下载的监听
      */
-    public interface OnDownProgress{
+    public interface DownListener {
         /**
          * 下载进度变化
-         * @param newLength 新的下载长度
+         * @param progress 新的下载长度
          */
-        public void onChange(long newLength);
+        public void onProgress(long progress);
 
         /**
          * 成功获取总长度
@@ -279,10 +322,16 @@ public class DownClient implements Runnable{
          * @param speed 新的速度/s
          */
         public void onSpeed(long speed);
+
+        /**
+         * 出现错误
+         * @param e
+         */
+        public void onError(RocketException e);
     }
 
 
-    public OnDownProgress getOnDownProgress() {
+    public DownListener getOnDownProgress() {
         return onDownProgress;
     }
 }

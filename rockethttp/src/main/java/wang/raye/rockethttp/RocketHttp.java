@@ -1,13 +1,13 @@
 package wang.raye.rockethttp;
 
 import android.content.Context;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,31 +31,34 @@ public class RocketHttp {
     /** 单例对象*/
     private static RocketHttp rocketHttp;
     /** 当前正在连接的对象*/
-    private Map<Long,HttpClient> clientMap = null;
+    private Map<Long,Client> clientMap = null;
     /** 默认的HttpConfig*/
     private  HttpConfig config;
-
+    private FinishListener onDownFinish;
+    private Map<Long,DownClient> downMap = null;
     private Handler handler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
-            HttpClient client = clientMap.get(msg.getData().getLong("token"));
+            Client client = clientMap.get(msg.getData().getLong("token"));
             if(client != null ) {
-                    CallBack callBack = ((HttpClient) client).getCallBack();
-                    switch (msg.what) {
-                        case HttpClient.ONINTERNET:
-                            //成功返回数据
-                            Object obj = msg.getData().get("data");
-                            if (obj instanceof SerializableBean) {
-                                callBack.onSuccess(((SerializableBean) msg.getData().get("data")).getData());
-                            } else {
-                                callBack.onSuccess(obj);
-                            }
+                    if(client instanceof HttpClient) {
+                        CallBack callBack = ((HttpClient) client).getCallBack();
+                        switch (msg.what) {
+                            case HttpClient.ONINTERNET:
+                                //成功返回数据
+                                Object obj = msg.getData().get("data");
+                                if (obj instanceof SerializableBean) {
+                                    callBack.onSuccess(((SerializableBean) msg.getData().get("data")).getData());
+                                } else {
+                                    callBack.onSuccess(obj);
+                                }
 
-                            break;
-                        case HttpClient.ONERROR:
-                            callBack.onError(new RocketException(msg.getData().getInt("code"),
-                                    msg.getData().getString("e")));
-                            break;
+                                break;
+                            case HttpClient.ONERROR:
+                                callBack.onError(new RocketException(msg.getData().getInt("code"),
+                                        msg.getData().getString("e")));
+                                break;
+                        }
                     }
                 clientMap.remove(msg.getData().getLong("token"));
             }
@@ -66,7 +69,8 @@ public class RocketHttp {
 
     private RocketHttp(){
         service = Executors.newCachedThreadPool();
-        clientMap = Collections.synchronizedMap(new HashMap<Long, HttpClient>());
+        clientMap = Collections.synchronizedMap(new HashMap<Long, Client>());
+
         config = new HttpConfig();
 
     }
@@ -74,6 +78,21 @@ public class RocketHttp {
     private synchronized static RocketHttp getRocketHttp(){
         if(rocketHttp == null){
             rocketHttp = new RocketHttp();
+        }
+        return rocketHttp;
+    }
+
+    private synchronized static RocketHttp getRocketHttpDown(){
+        if(rocketHttp == null){
+            rocketHttp = new RocketHttp();
+        }
+        if(rocketHttp.onDownFinish == null){
+            rocketHttp.onDownFinish = new FinishListener() {
+                @Override
+                public void onDownFinish(long token) {
+                    rocketHttp.clientMap.remove(token);
+                }
+            };
         }
         return rocketHttp;
     }
@@ -175,7 +194,7 @@ public class RocketHttp {
      * @return  请求的HttpClient的标识
      */
     public synchronized static long post(String url,HashMap<String,Object> params,CallBack callBack){
-        return post(url,params,null,callBack,null);
+        return post(url, params, null, callBack, null);
     }
 
     /**
@@ -186,7 +205,7 @@ public class RocketHttp {
      * @return 请求的HttpClient的标识
      */
     public synchronized static long post(String url,Object params,CallBack callBack){
-        return post(url,null,params,callBack,null);
+        return post(url, null, params, callBack, null);
     }
 
     /**
@@ -243,6 +262,25 @@ public class RocketHttp {
         }
     }
 
+    /**
+     * 下载文件
+     * @param context 程序上下文
+     * @param url 文件URL
+     * @param progress 下载监听
+     * @return 请求的DownClient的标识
+     */
+    public synchronized static long down(Context context,String url, final DownClient.DownListener progress) {
+        final RocketHttp rocketHttp = getRocketHttpDown();
+
+        long token = System.currentTimeMillis();
+        DownClient client = new DownClient(context, url, Environment.
+                getExternalStoragePublicDirectory("Rocket").getAbsolutePath(), progress,
+                rocketHttp.onDownFinish,token);
+        rocketHttp.clientMap.put(token,client);
+        rocketHttp.service.execute(client);
+        return token;
+    }
+
     @Override
     protected void finalize() throws Throwable {
         service = null;
@@ -265,10 +303,16 @@ public class RocketHttp {
 
     public static synchronized void stop(long token){
         RocketHttp rocketHttp = getRocketHttp();
-        HttpClient client = getRocketHttp().clientMap.get(token);
+        Client client = getRocketHttp().clientMap.get(token);
         if(client != null){
             client.stop();
             rocketHttp.clientMap.remove(token);
         }
+    }
+
+
+    public interface FinishListener {
+
+        void onDownFinish(long token);
     }
 }
