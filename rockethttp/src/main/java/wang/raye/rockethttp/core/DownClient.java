@@ -92,7 +92,7 @@ public class DownClient implements Runnable,Client{
                         speed = t;
                         onDownProgress.onSpeed(temp);
                         if(!isFinish){
-                            handler.sendEmptyMessageDelayed(4, 1000);
+                            handler.sendEmptyMessageDelayed(ONSPEED, 1000);
                         }
                         break;
                     case ONERROR:

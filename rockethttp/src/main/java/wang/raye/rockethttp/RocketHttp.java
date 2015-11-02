@@ -17,6 +17,7 @@ import wang.raye.rockethttp.core.GetClient;
 import wang.raye.rockethttp.core.HttpClient;
 import wang.raye.rockethttp.core.HttpConfig;
 import wang.raye.rockethttp.core.PostClient;
+import wang.raye.rockethttp.core.UploadClient;
 import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 
@@ -269,7 +270,8 @@ public class RocketHttp {
      * @param progress 下载监听
      * @return 请求的DownClient的标识
      */
-    public synchronized static long down(Context context,String url, final DownClient.DownListener progress) {
+    public synchronized static long down(Context context,String url,
+                                         final DownClient.DownListener progress) {
         final RocketHttp rocketHttp = getRocketHttpDown();
 
         long token = System.currentTimeMillis();
@@ -281,9 +283,42 @@ public class RocketHttp {
         return token;
     }
 
+    /**
+     * 下载文件
+     * @param context 程序上下文
+     * @param url 文件URL
+     * @param path 保存路径
+     * @param progress 下载监听
+     * @return 请求的DownClient的标识
+     */
+    public synchronized static long down(Context context,String url,String path,
+                                         final DownClient.DownListener progress) {
+        final RocketHttp rocketHttp = getRocketHttpDown();
+
+        long token = System.currentTimeMillis();
+        DownClient client = new DownClient(context, url, path, progress,
+                rocketHttp.onDownFinish,token);
+        rocketHttp.clientMap.put(token,client);
+        rocketHttp.service.execute(client);
+        return token;
+    }
+
+    public synchronized static long upload(String url,String filePath,
+                                           final UploadClient.UploadListener listener){
+        final RocketHttp rocketHttp = getRocketHttpDown();
+
+        long token = System.currentTimeMillis();
+        UploadClient client = new UploadClient(url,filePath,listener,rocketHttp.onDownFinish,token);
+        rocketHttp.clientMap.put(token,client);
+        rocketHttp.service.execute(client);
+        return token;
+    }
+
     @Override
     protected void finalize() throws Throwable {
         service = null;
+        clientMap.clear();
+        clientMap = null;
         super.finalize();
     }
 

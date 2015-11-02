@@ -19,6 +19,7 @@ import wang.raye.preioc.annotation.BindById;
 import wang.raye.preioc.annotation.OnClick;
 import wang.raye.rockethttp.RocketHttp;
 import wang.raye.rockethttp.core.DownClient;
+import wang.raye.rockethttp.core.UploadClient;
 import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 import wang.raye.rockethttp.utils.ImageLoaderUtil;
@@ -72,7 +73,7 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private long token;
-    @OnClick({R.id.begin,R.id.stop,R.id.clean})
+    @OnClick({R.id.begin,R.id.stop,R.id.clean,R.id.upload})
     public void click(View view){
         switch (view.getId()){
             case R.id.begin:
@@ -109,6 +110,35 @@ public class MainActivity extends ActionBarActivity {
                 break;
             case R.id.stop:
                 RocketHttp.stop(token);
+                break;
+            case R.id.upload:
+                RocketHttp.upload("http://192.168.9.131:8080/shangchuan/doUpload.jsp",
+                        "/mnt/sdcard/image1.jpg", new UploadClient.UploadListener() {
+                            @Override
+                            public void onAllLength(long allLength) {
+
+                            }
+
+                            @Override
+                            public void onProgressChange(long progress) {
+
+                            }
+
+                            @Override
+                            public void onSpeed(long speed) {
+
+                            }
+
+                            @Override
+                            public void onFinish() {
+                                Log.i("Raye","upload finish");
+                            }
+
+                            @Override
+                            public void onError(RocketException e) {
+
+                            }
+                        });
                 break;
             case R.id.clean:
                 ImageLoaderUtil.getInstance(this,null).cleanCache();
