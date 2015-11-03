@@ -112,20 +112,21 @@ public class MainActivity extends ActionBarActivity {
                 RocketHttp.stop(token);
                 break;
             case R.id.upload:
-                RocketHttp.upload("http://192.168.9.131:8080/shangchuan/doUpload.jsp",
+                RocketHttp.upload("http://www.14sy.cn/shangchuan/doUpload.jsp",
                         "/mnt/sdcard/image1.jpg", new UploadClient.UploadListener() {
                             @Override
                             public void onAllLength(long allLength) {
-
+                                Log.i("Raye","onAllLength:"+allLength);
                             }
 
                             @Override
                             public void onProgressChange(long progress) {
-
+                                Log.i("Raye","onProgressChange:"+progress);
                             }
 
                             @Override
                             public void onSpeed(long speed) {
+                                Log.i("Raye","onSpeed:"+speed);
 
                             }
 
@@ -136,6 +137,7 @@ public class MainActivity extends ActionBarActivity {
 
                             @Override
                             public void onError(RocketException e) {
+                                Log.i("Raye","onError:"+e.getMsg());
 
                             }
                         });

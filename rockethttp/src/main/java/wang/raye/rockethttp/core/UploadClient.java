@@ -19,7 +19,8 @@ import wang.raye.rockethttp.RocketHttp;
 import wang.raye.rockethttp.exception.RocketException;
 
 /**
- * Created by Administrator on 2015/10/30.
+ * Http 上传Client
+ * Created by Raye on 2015/10/30.
  */
 public class UploadClient implements Runnable,Client {
 
@@ -64,6 +65,8 @@ public class UploadClient implements Runnable,Client {
         @Override
         public void handleMessage(Message msg) {
             if(msg.what == ONUPLOADFINSH && finishListener != null){
+
+                isContinue = false;
                 finishListener.onDownFinish(msg.getData().getLong("token"));
             }
             if(uploadListener != null) {
@@ -186,6 +189,7 @@ public class UploadClient implements Runnable,Client {
 //                    isr.close();
                         Message m = handler.obtainMessage(ONUPLOADFINSH);
                         sendMessage(m);
+                        break;
                     }else if(code == 404){
                         Message m = handler.obtainMessage(ONERROR);
                         m.getData().putInt("code", code);
@@ -270,7 +274,7 @@ public class UploadClient implements Runnable,Client {
      * @param m
      */
     protected void sendMessage(Message m){
-        if(!isContinue) {
+        if(isContinue) {
             m.getData().putLong("token",token);
             handler.sendMessage(m);
         }
