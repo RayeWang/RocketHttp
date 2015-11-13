@@ -1,33 +1,81 @@
-apply plugin: 'com.android.library'
+//apply plugin: 'com.android.library'
 apply plugin: 'java'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven'
+version = "1.0.0"
 
-def siteUrl = 'https://github.com/RayeWang/PreIOC'    // project homepage
-def gitUrl = 'https://github.com/RayeWang/PreIOC.git' // project git
+def siteUrl = 'https://github.com/RayeWang/RocketHttp'    // project homepage
+def gitUrl = 'https://github.com/RayeWang/RocketHttp.git' // project git
 group = "wang.raye.rockethttp"
 
-android {
-    compileSdkVersion 21
-    buildToolsVersion "19.1.0"
+//android {
+//    compileSdkVersion 21
+//    buildToolsVersion "19.1.0"
+//
+//    defaultConfig {
+//        minSdkVersion 15
+//        targetSdkVersion 21
+//        versionCode 1
+//        versionName "1.0"
+//    }
+//    buildTypes {
+//        release {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//        }
+//    }
+//}
 
-    defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-}
-
+//    compile 'com.google.code.gson:gson:2.4'
+//    compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.4'
+//    compile 'com.android.support:appcompat-v7:22.2.0'
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.google.android:android:4.1.1.4'
     compile files('libs/gson-2.2.4.jar')
     compile files('libs/universal-image-loader-1.9.4.jar')
+}
+
+task sourcesJar(type: Jar) {
+    from 'build/classes'
+    classifier = 'sources'
+}
+
+
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = "RocketHttp"
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
+}
+javadoc {
+    options{
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+        links "http://docs.oracle.com/javase/7/docs/api"
+    }
+}
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-Xlint:unchecked"
 }
