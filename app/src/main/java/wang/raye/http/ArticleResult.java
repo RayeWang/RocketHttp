@@ -2,6 +2,7 @@ package wang.raye.http;
 
 import android.os.Parcelable;
 
+
 import com.google.gson.Gson;
 
 import java.io.Serializable;

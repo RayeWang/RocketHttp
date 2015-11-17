@@ -1,6 +1,5 @@
 package wang.raye.rockethttp.core;
 
-import android.media.ImageReader;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;

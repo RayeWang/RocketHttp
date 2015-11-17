@@ -217,7 +217,6 @@ public abstract class HttpClient implements Runnable,Client{
     /**
      * 自动将json字符串转换成对象
      * @param json
-     * @return
      */
     protected void parse(String json,Bundle bundle){
         Class clz = getCallBackClz();

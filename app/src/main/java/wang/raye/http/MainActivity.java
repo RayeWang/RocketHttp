@@ -1,5 +1,6 @@
 package wang.raye.http;
 
+import android.app.Activity;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 
@@ -24,7 +26,7 @@ import wang.raye.rockethttp.exception.RocketException;
 import wang.raye.rockethttp.response.CallBack;
 import wang.raye.rockethttp.utils.ImageLoaderUtil;
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends Activity {
 
     @BindById(R.id.begin)
     TextView begin;
@@ -38,7 +40,6 @@ public class MainActivity extends ActionBarActivity {
         PreIOC.binder(this);
         HashMap<String,Object> params = new HashMap<>();
         params.put("page", 2);
-
         RequestBean bean = new RequestBean(2);
         RocketHttp.post("http://www.1024eye.com/app/article.do", bean, new CallBack<ArticleResult>() {
             @Override
@@ -168,5 +169,9 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public <T extends View>T getView(int resid){
+        return (T) findViewById(resid);
     }
 }

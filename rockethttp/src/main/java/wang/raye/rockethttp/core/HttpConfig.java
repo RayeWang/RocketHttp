@@ -3,7 +3,6 @@ package wang.raye.rockethttp.core;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.annotation.Nullable;
 
 import wang.raye.rockethttp.RocketHttp;
 import wang.raye.rockethttp.response.CallBack;
@@ -77,7 +76,7 @@ public class HttpConfig {
         return this;
     }
 
-    public HttpConfig setMustWifi(boolean isWifi,@Nullable Context context){
+    public HttpConfig setMustWifi(boolean isWifi, Context context){
         this.isWifi = isWifi;
         this.context = context;
         return this;
